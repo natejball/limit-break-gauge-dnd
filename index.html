@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Limit Break Gauge</title>
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --panel:#13151b;
+      --ink:#d7dbe0;
+      --muted:#9aa3ad;
+      --accent:#7c3a3a;
+      --accent-2:#b44;
+      --gold:#c7a86e;
+      --gauge-bg:#1c212b;
+      --gauge-fill:#4b5563;
+      --gauge-full:#a31621;
+      --ring:#2a2f3a;
+      --shadow: 0 10px 30px rgba(0,0,0,.55);
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(163,22,33,.15), transparent 60%),
+        radial-gradient(800px 600px at 120% 10%, rgba(196,168,110,.08), transparent 70%),
+        radial-gradient(1000px 900px at 50% 120%, rgba(80,86,99,.15), transparent 65%),
+        linear-gradient(180deg, #0b0c10 0%, #0a0a0e 60%, #09090c 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial;
+      display:grid;place-items:center;
+    }
+
+    .wrap{
+      width:min(920px, 92vw);
+      padding:28px 24px 34px;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)) , var(--panel);
+      border:1px solid var(--ring);
+      border-radius:24px;
+      box-shadow: var(--shadow);
+    }
+
+    .title{
+      margin:0 0 18px 0;
+      font-weight:900;
+      font-size: clamp(42px, 7vw, 76px);
+      letter-spacing:.06em;
+      text-align:center;
+      color: var(--gold);
+      text-shadow: 0 2px 8px rgba(0,0,0,.5);
+      transition: color .35s ease, text-shadow .35s ease, filter .35s ease;
+    }
+    .title.limit-active{
+      color:#ffe7a9;
+      text-shadow:
+        0 0 0 #000,
+        0 0 12px rgba(163,22,33,.45),
+        0 3px 14px rgba(0,0,0,.6);
+      filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 12px rgba(255,230,160,.25));
+    }
+
+    .gauge-area{position:relative;}
+    .gauge{
+      position:relative;
+      height:32px;
+      background: linear-gradient(180deg, #1d222b, #151922);
+      border:1px solid #2b313d;
+      border-radius:999px;
+      overflow:hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03), inset 0 -6px 14px rgba(0,0,0,.4);
+    }
+    .gauge-fill{
+      position:absolute;inset:0 0 0 0;
+      width:0%;
+      background: linear-gradient(90deg, rgba(90,96,112,.85), rgba(64,72,92,.95));
+      transition: width .45s cubic-bezier(.22,.92,.23,.99), background .35s ease;
+    }
+    .gauge-fill.limit{
+      background: linear-gradient(90deg, rgba(163,22,33,.95), rgba(116,9,16,.95));
+    }
+    .gauge-cap{
+      position:absolute; inset:0; pointer-events:none;
+      border-radius:999px;
+      box-shadow: inset 0 0 12px rgba(255,255,255,.05), inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+
+    .gauge-number{
+      position:absolute; left:50%; top:50%; transform:translate(-50%, -50%);
+      font-size:16px; font-weight:800; color:#fff;
+      text-shadow:0 1px 4px rgba(0,0,0,.7);
+      pointer-events:none;
+    }
+
+    .gauge-labels{
+      display:flex; justify-content:space-between; margin-top:8px;
+      color:var(--muted); font-size:12px; letter-spacing:.06em;
+    }
+
+    .float{
+      position:absolute; left:50%; transform:translateX(-50%);
+      top:-12px;
+      font-weight:800; font-size:22px; letter-spacing:.05em;
+      color:#eaecef;
+      text-shadow: 0 2px 10px rgba(0,0,0,.55);
+      animation: floatUpFade 3s forwards ease-out;
+      pointer-events:none;
+      white-space:nowrap;
+    }
+    @keyframes floatUpFade{
+      0%{ opacity:0; transform:translate(-50%, 8px) scale(.96); }
+      8%{ opacity:1; transform:translate(-50%, 0) scale(1); }
+      70%{ opacity:1; transform:translate(-50%, -26px) scale(1.02); }
+      100%{ opacity:0; transform:translate(-50%, -42px) scale(1.04); }
+    }
+
+    .controls{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:20px;}
+    @media (min-width: 760px){ .controls{ grid-template-columns: 1fr 1fr; } }
+
+    .btn{
+      appearance:none; border:1px solid #2a2f3a; border-radius:14px;
+      padding:14px 16px; font-size:16px; font-weight:700; letter-spacing:.02em;
+      color:var(--ink);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0)) , #171a22;
+      box-shadow: 0 1px 0 rgba(255,255,255,.03), 0 8px 22px rgba(0,0,0,.35);
+      transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      cursor:pointer;
+    }
+    .btn:hover{ border-color:#374151; box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 10px 26px rgba(0,0,0,.42); }
+    .btn:active{ transform: translateY(1px) scale(.998); }
+
+    .btn-accent{ border-color:#3a2a2a; background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0)) , #1b1416; }
+
+    .reset-wrap{ display:none; margin-top:18px; text-align:center; }
+    .reset-wrap.show{ display:block; }
+
+    .reset-btn{
+      font-size:20px; font-weight:800; padding:20px 24px;
+      border-radius:18px;
+      background: linear-gradient(180deg, #5c0e0e, #3a0a0a);
+      color:#fff; border:2px solid #a31621;
+      box-shadow:0 0 12px rgba(163,22,33,.6);
+    }
+
+    .tiny{ color:var(--muted); font-size:12px; margin-top:10px; text-align:center; }
+  </style>
+</head>
+<body>
+  <main class="wrap" role="application" aria-label="Limit Break Gauge">
+    <h1 id="title" class="title" aria-live="polite">LIMIT BREAK</h1>
+
+    <section class="gauge-area" aria-label="Limit Break meter">
+      <div id="gauge" class="gauge" aria-hidden="false" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0" role="progressbar" title="Current total: 0">
+        <div id="fill" class="gauge-fill" style="width:0%"></div>
+        <div class="gauge-cap"></div>
+        <div id="gaugeNumber" class="gauge-number">0 / 30</div>
+      </div>
+      <div class="gauge-labels" aria-hidden="true">
+        <span>0</span><span>30</span>
+      </div>
+    </section>
+
+    <section id="controls" class="controls" aria-label="Actions">
+      <button class="btn" data-sides="4" title="Rolls 1d4">I take Damage / I Deal Damage / I Heal! (d4)</button>
+      <button class="btn" data-sides="8" title="Rolls 1d8">Ally Takes Damage / Enemy Falls! (d8)</button>
+      <button class="btn" data-sides="6" title="Rolls 1d6">Miss / An Enemy Saves! (d6)</button>
+      <button class="btn btn-accent" data-sides="20" title="Rolls 1d20">An Ally Falls in Battle / I MUST PREVAIL! (d20)</button>
+    </section>
+
+    <div id="resetWrap" class="reset-wrap">
+      <button id="reset" class="btn" aria-label="Reset the gauge">Reset</button>
+    </div>
+
+    <p class="tiny">Limit Break Gauge for D&D. Tap each button as the applicable instance occurs.</p>
+  </main>
+
+  <script>
+    (function(){
+      const MAX = 30;
+      let total = 0;
+
+      const title = document.getElementById('title');
+      const fill = document.getElementById('fill');
+      const controls = document.getElementById('controls');
+      const resetWrap = document.getElementById('resetWrap');
+      const resetBtn = document.getElementById('reset');
+      const gauge = document.getElementById('gauge');
+      const gaugeNumber = document.getElementById('gaugeNumber');
+
+      function rollDie(sides){
+        return Math.floor(Math.random() * sides) + 1;
+      }
+
+      function updateGauge(){
+        const pct = Math.min(100, (total / MAX) * 100);
+        fill.style.width = pct + '%';
+        gauge.setAttribute('aria-valuenow', Math.min(total, MAX));
+        gauge.setAttribute('title', 'Current total: ' + total);
+
+        gaugeNumber.textContent = total + ' / ' + MAX;
+
+        const reached = total >= MAX;
+        fill.classList.toggle('limit', reached);
+        title.classList.toggle('limit-active', reached);
+
+        if (reached){
+          controls.style.display = 'none';
+          resetWrap.classList.add('show');
+          resetBtn.textContent = 'You can now auto-crit on a d20. Tap this button to reset when you do.';
+          resetBtn.classList.add('reset-btn');
+        } else {
+          resetBtn.textContent = 'Reset';
+          resetBtn.classList.remove('reset-btn');
+        }
+      }
+
+      function showFloat(value){
+        const span = document.createElement('div');
+        span.className = 'float';
+        span.textContent = '+' + value;
+        gauge.parentElement.appendChild(span);
+        setTimeout(()=> span.remove(), 3000);
+      }
+
+      function handleRoll(sides){
+        const n = rollDie(sides);
+        showFloat(n);
+        total = Math.min(MAX, total + n);
+        updateGauge();
+      }
+
+      controls.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-sides]');
+        if(!btn) return;
+        const sides = parseInt(btn.getAttribute('data-sides'), 10);
+        handleRoll(sides);
+      });
+
+      resetBtn.addEventListener('click', ()=>{
+        total = 0;
+        updateGauge();
+        resetWrap.classList.remove('show');
+        controls.style.display = '';
+      });
+
+      updateGauge();
+    })();
+  </script>
+</body>
+</html>
